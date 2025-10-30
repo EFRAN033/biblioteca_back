@@ -16,7 +16,7 @@ class UsuarioDB(Base):
     nombres = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     hash_contrasena = Column(String)
-    rol = Column(SQLAlchemyEnum(RolUsuario))
+    rol = Column(SQLAlchemyEnum(RolUsuario, values_callable=lambda obj: [e.value for e in obj]))
     fecha_creacion = Column(DateTime)
 
 

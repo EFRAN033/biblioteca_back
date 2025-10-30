@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from .entidades.Usuario import Usuario
+from ..entidades.Usuario import Usuario
 
 class IRepoUsuario(ABC):
 
