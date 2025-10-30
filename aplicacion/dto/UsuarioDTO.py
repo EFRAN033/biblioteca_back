@@ -5,7 +5,7 @@ class UsuarioRegistroDTO(BaseModel):
     nombres: str
     email: EmailStr
     password: str
-    rol: RolUsuario = RolUsuario.ESTUDIANTE # Rol por defecto
+    rol: RolUsuario = RolUsuario.ESTUDIANTE 
 
 class UsuarioLoginDTO(BaseModel):
     email: EmailStr

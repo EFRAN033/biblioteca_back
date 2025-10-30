@@ -11,15 +11,13 @@ from aplicacion.dto.ProductoMarketDTO import ProductoCrearDTO, ProductoPublicado
 from aplicacion.casos_uso.CU_AgregarProductoMarket import AgregarProductoMarket
 from infraestructura.persistencia.configuracion import get_db
 from infraestructura.persistencia.RepositorioProductoMarketSQL import RepositorioProductoMarketSQL
-from infraestructura.persistencia.RepositorioUsuarioSQL import RepositorioUsuarioSQL # ¡Necesario para buscar al usuario!
+from infraestructura.persistencia.RepositorioUsuarioSQL import RepositorioUsuarioSQL 
 from dominio.entidades.Usuario import Usuario
 
 router = APIRouter(
     prefix="/market",
     tags=["Marketplace"]
 )
-
-# --- INICIO DE LA LÓGICA DE SEGURIDAD ---
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 SECRET_KEY = os.getenv("JWT_SECRET")
@@ -44,9 +42,6 @@ def get_usuario_actual(token: str = Depends(oauth2_scheme), db: Session = Depend
     if usuario is None:
         raise credentials_exception
     return usuario
-
-# --- FIN DE LA LÓGICA DE SEGURIDAD ---
-
 
 @router.post("/", response_model=ProductoPublicadoDTO, status_code=status.HTTP_201_CREATED)
 def agregar_producto(

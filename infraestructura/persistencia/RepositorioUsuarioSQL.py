@@ -9,7 +9,6 @@ from dominio.entidades.Usuario import Usuario
 from dominio.puertos.IRepoUsuario import IRepoUsuario
 from dominio.value_objects.RolUsuario import RolUsuario
 
-# Modelo de la tabla de la base de datos
 class UsuarioDB(Base):
     __tablename__ = "usuarios"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

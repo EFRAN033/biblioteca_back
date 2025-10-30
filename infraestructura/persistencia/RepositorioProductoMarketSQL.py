@@ -8,7 +8,6 @@ from dominio.entidades.ProductoMarket import ProductoMarket
 from dominio.puertos.IRepoProductoMarket import IRepoProductoMarket
 from dominio.value_objects.EstadoProducto import EstadoProducto
 
-# Modelo de la tabla de la base de datos
 class ProductoMarketDB(Base):
     __tablename__ = "productos_market"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -18,7 +17,7 @@ class ProductoMarketDB(Base):
     precio = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
     estado = Column(SQLAlchemyEnum(EstadoProducto, values_callable=lambda obj: [e.value for e in obj]))
-    usuario_vendedor_id = Column(UUID(as_uuid=True), nullable=False) # En una implementación real, sería una FK a usuarios
+    usuario_vendedor_id = Column(UUID(as_uuid=True), nullable=False) 
 
 class RepositorioProductoMarketSQL(IRepoProductoMarket):
 

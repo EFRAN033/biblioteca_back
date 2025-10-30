@@ -27,21 +27,13 @@ class RepositorioLibroSQL(IRepoLibro):
 
     def guardar(self, libro: Libro) -> Libro:
         libro_db = LibroDB(**libro.model_dump())
-        self.db.add(libro_db)
-        self.db.commit()
-        self.db.refresh(libro_db)
-        return Libro.model_validate(libro_db.__dict__)
+        libro_gestionado = self.db.merge(libro_db)
+        return Libro.model_validate(libro_gestionado.__dict__)
 
     def obtener_todos(self) -> List[Libro]:
         libros_db = self.db.query(LibroDB).all()
         return [Libro.model_validate(libro.__dict__) for libro in libros_db]
 
-    def obtener_por_id(self, id: str) -> Optional[Libro]:
-        libro_db = self.db.query(LibroDB).filter(LibroDB.id == id).first()
-        if libro_db:
-            return Libro.model_validate(libro_db.__dict__)
-        return None
-    
     def obtener_por_id(self, libro_id: uuid.UUID) -> Optional[Libro]:
         libro_db = self.db.query(LibroDB).filter(LibroDB.id == libro_id).first()
         if libro_db:

@@ -7,6 +7,6 @@ class Usuario(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     nombres: str
     email: EmailStr
-    hash_contrasena: str # Importante: Nunca guardamos la contraseña en texto plano
+    hash_contrasena: str 
     rol: RolUsuario
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow)

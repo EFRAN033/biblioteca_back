@@ -1,4 +1,3 @@
-# infraestructura/seguridad/ServicioAutenticacionJWT.py
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
