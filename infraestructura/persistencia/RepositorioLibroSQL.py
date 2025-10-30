@@ -41,3 +41,9 @@ class RepositorioLibroSQL(IRepoLibro):
         if libro_db:
             return Libro.model_validate(libro_db.__dict__)
         return None
+    
+    def obtener_por_id(self, libro_id: uuid.UUID) -> Optional[Libro]:
+        libro_db = self.db.query(LibroDB).filter(LibroDB.id == libro_id).first()
+        if libro_db:
+            return Libro.model_validate(libro_db.__dict__)
+        return None

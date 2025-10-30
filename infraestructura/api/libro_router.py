@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 
 # Importamos la lógica de seguridad y los DTOs necesarios
 from .market_router import get_usuario_actual
@@ -47,3 +48,18 @@ def listar_libros(
     repo = RepositorioLibroSQL(db)
     caso_uso = GestionarLibros(repositorio_libro=repo)
     return caso_uso.obtener_todos_los_libros()
+
+@router.get("/{libro_id}", response_model=LibroDetalleDTO)
+def obtener_libro(
+    libro_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    repo = RepositorioLibroSQL(db)
+    caso_uso = GestionarLibros(repositorio_libro=repo)
+    libro = caso_uso.obtener_libro_por_id(libro_id)
+    if not libro:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Libro no encontrado."
+        )
+    return libro
