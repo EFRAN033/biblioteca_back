@@ -1,4 +1,4 @@
-# API de Biblioteca Digital (Proyecto Universitario)
+# API de Biblioteca Digital
 
 Sistema de gestión para Biblioteca, Repositorio y Marketplace.
 
