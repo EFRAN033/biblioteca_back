@@ -97,7 +97,7 @@ Contiene las implementaciones concretas de las interfaces y todo lo relacionado 
 6.  **Acceder a la documentación de la API:**
     Abre tu navegador y ve a [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) para ver la interfaz de Swagger UI.
 
-### Ejecución con Docker
+### Ejecución con Docker  ### Aun no implementado "Proxima implementacion"
 
 Si tienes Docker instalado, puedes construir y ejecutar la imagen:
 
