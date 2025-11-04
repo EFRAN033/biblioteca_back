@@ -91,7 +91,7 @@ Contiene las implementaciones concretas de las interfaces y todo lo relacionado 
 
 5.  **Ejecutar la aplicación:**
     ```bash
-    uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    uvicorn main:app --reload
     ```
 
 6.  **Acceder a la documentación de la API:**
