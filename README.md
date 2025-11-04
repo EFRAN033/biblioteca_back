@@ -66,8 +66,8 @@ Contiene las implementaciones concretas de las interfaces y todo lo relacionado 
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/EFRAN033/biblioteca_back.git](hhttps://github.com/EFRAN033/biblioteca_back.git)
-    cd tu-repositorio
+    git clone [https://github.com/EFRAN033/biblioteca_back.git](https://github.com/EFRAN033/biblioteca_back.git)
+    cd BIBLIOTECA
     ```
 
 2.  **Crear y activar un entorno virtual:**
