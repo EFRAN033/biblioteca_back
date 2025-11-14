@@ -1,3 +1,4 @@
+# efran033/biblioteca_back/biblioteca_back-e45426e2e00fbbc201232909bbf09d0ca9ea44ce/infraestructura/api/auth_router.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -20,10 +21,22 @@ def registrar_usuario(usuario_data: UsuarioRegistroDTO, db: Session = Depends(ge
         repo = RepositorioUsuarioSQL(db)
         hasher = PasswordHasher()
         caso_uso = RegistrarUsuario(repositorio_usuario=repo, hasher=hasher)
-        caso_uso.ejecutar(usuario_data)
-        return {"mensaje": "Usuario creado exitosamente."}
+        
+        # El DTO 'usuario_data' ahora coincide con el JSON del frontend
+        # y el caso de uso 'ejecutar' maneja la nueva lógica
+        caso_uso.ejecutar(usuario_data) 
+        
+        # Mensaje de éxito genérico
+        if usuario_data.rol == RolUsuario.ESTUDIANTE:
+             return {"mensaje": "Usuario creado exitosamente."}
+        else:
+             return {"mensaje": "Solicitud de registro enviada para revisión."}
+
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        # Captura de errores inesperados
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ocurrió un error inesperado.")
 
 
 @router.post("/login", response_model=TokenDTO)

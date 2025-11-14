@@ -4,3 +4,4 @@ class RolUsuario(str, Enum):
     ESTUDIANTE = "estudiante"
     BIBLIOTECARIO = "bibliotecario"
     ADMIN = "admin"
+    REVISOR = "revisor"
