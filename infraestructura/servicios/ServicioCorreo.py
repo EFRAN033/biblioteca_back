@@ -1,27 +1,75 @@
-# infraestructura/servicios/ServicioCorreo.py
+# infraestructura/servicios/ServicioCorreo.py (Implementación Real)
 
+import os
+from dotenv import load_dotenv
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from dominio.puertos.IServicioCorreo import IServicioCorreo
 from dominio.entidades.Usuario import Usuario
+from typing import Optional
+
+# Cargar variables de entorno si no se han cargado (seguridad)
+load_dotenv() 
+
+# Configuración del servidor SMTP usando las variables del .env
+# Esto requiere que tu app de Gmail o proveedor tenga habilitado el acceso por app password
+conf = ConnectionConfig(
+    MAIL_USERNAME=os.getenv("EMAIL_USER"),
+    MAIL_PASSWORD=os.getenv("EMAIL_PASS"),
+    MAIL_FROM=os.getenv("EMAIL_SENDER"),
+    MAIL_PORT=int(os.getenv("EMAIL_PORT")),
+    MAIL_SERVER=os.getenv("EMAIL_HOST"),
+    MAIL_FROM_NAME=os.getenv("EMAIL_SENDER"),
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True,
+    # Se usa 'FastMail' como motor de correo
+)
 
 class ServicioCorreo(IServicioCorreo):
-    """
-    Implementación básica para simular el envío de correos.
-    En un entorno real, usarías SMTP o un API como SendGrid.
-    """
-    def enviar_aprobacion(self, usuario: Usuario, contrasena_temporal: str = None) -> bool:
-        print("\n" + "="*50)
-        print(f"ENVIANDO CORREO DE APROBACIÓN a: {usuario.email}")
-        print(f"ROL: {usuario.rol.value.upper()} APROBADO")
+    
+    async def enviar_aprobacion(self, usuario: Usuario, contrasena_temporal: Optional[str] = None) -> bool:
         
+        # 1. Crear el contenido del mensaje
         if contrasena_temporal:
-            print("--- CREDENCIALES ---")
-            print(f"Usuario (Email): {usuario.email}")
-            print(f"Contraseña Temporal: {contrasena_temporal}")
-            print("--------------------")
-            print("Instrucción: ¡Por favor, cambia tu contraseña de inmediato!")
-        else:
-            print("Instrucción: Tu cuenta ha sido activada. Tu acceso es con la contraseña que registraste.")
+            body_content = f"""
+            ¡Hola {usuario.nombres}!
             
-        print("="*50 + "\n")
-        
-        return True
+            Tu solicitud como **{usuario.rol.value.capitalize()}** en LibroHub ha sido **APROBADA**.
+            
+            Tus credenciales temporales son:
+            - **Usuario (Email):** {usuario.email}
+            - **Contraseña Temporal:** {contrasena_temporal}
+            
+            Por favor, inicia sesión y cambia tu contraseña de inmediato.
+            """
+        else:
+            body_content = f"""
+            ¡Hola {usuario.nombres}!
+            
+            Tu cuenta como **{usuario.rol.value.capitalize()}** en LibroHub ha sido **ACTIVADA**.
+            Ya puedes acceder con tu contraseña registrada.
+            """
+
+        # 2. Configurar el mensaje
+        message = MessageSchema(
+            subject="🚀 Cuenta de LibroHub Aprobada y Activada",
+            recipients=[usuario.email],  # Lista de destinatarios
+            body=body_content,
+            subtype=MessageType.plain,
+            # subtype=MessageType.html # Usa HTML si el body es HTML
+        )
+
+        # 3. Enviar el correo usando FastAPI-Mail
+        fm = FastMail(conf)
+        try:
+            # 💡 IMPORTANTE: Debes usar await, lo que significa que el endpoint debe ser 'async'
+            await fm.send_message(message) 
+            print(f"INFO: Correo de aprobación enviado realmente a {usuario.email}")
+            return True
+        except Exception as e:
+            print(f"ERROR: No se pudo enviar el correo a {usuario.email}. Detalles: {e}")
+            return False
+
+# Nota: FastMail requiere funciones asíncronas para enviar.
+# Debemos ajustar el router.

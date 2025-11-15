@@ -1,12 +1,13 @@
 import uuid 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List # <-- Necesario para el tipo de retorno List[UsuarioDetalleDTO]
+from typing import List 
+import os # Importar os para acceder a variables de entorno
 
 # --- Importaciones de Capa de Dominio y Seguridad ---
 from dominio.entidades.Usuario import Usuario
 from dominio.value_objects.RolUsuario import RolUsuario 
-from infraestructura.api.market_router import get_usuario_actual # Dependencia de seguridad
+from infraestructura.api.market_router import get_usuario_actual 
 # ----------------------------------------------------
 
 # --- Importaciones de Capa de Aplicación ---
@@ -22,7 +23,7 @@ from infraestructura.persistencia.configuracion import get_db
 from infraestructura.persistencia.RepositorioUsuarioSQL import RepositorioUsuarioSQL
 from infraestructura.seguridad.password_hasher import PasswordHasher
 from infraestructura.seguridad.ServicioAutenticacionJWT import ServicioAutenticacionJWT
-# ⬇️ NUEVA IMPORTACIÓN: Debes asegurar que la ruta a tu ServicioCorreo sea correcta
+# ⬇️ NUEVA IMPORTACIÓN: Asegurar que la ruta a tu ServicioCorreo sea correcta
 from infraestructura.servicios.ServicioCorreo import ServicioCorreo 
 # ----------------------------------------------------
 
@@ -33,7 +34,6 @@ router = APIRouter(
 )
 
 # --- DEPENDENCIA DE SEGURIDAD PARA ADMINISTRADORES ---
-# Función para asegurar que solo los usuarios con rol ADMIN accedan
 def solo_admins(usuario_actual: Usuario = Depends(get_usuario_actual)):
     if usuario_actual.rol != RolUsuario.ADMIN:
         raise HTTPException(
@@ -81,9 +81,9 @@ def login_para_access_token(usuario_data: UsuarioLoginDTO, db: Session = Depends
         )
 
 
-# --- ENDPOINT PARA APROBACIÓN DE USUARIOS (CORREGIDO) ---
+# --- ENDPOINT PARA APROBACIÓN DE USUARIOS (CORREGIDO A ASYNC) ---
 @router.patch("/users/{user_id}/approve", response_model=UsuarioDetalleDTO)
-def aprobar_usuario(
+async def aprobar_usuario( # ⬅️ CAMBIO CLAVE: La función debe ser asíncrona
     user_id: uuid.UUID,
     db: Session = Depends(get_db),
     admin_actual: Usuario = Depends(solo_admins) 
@@ -94,7 +94,6 @@ def aprobar_usuario(
     """
     try:
         repo = RepositorioUsuarioSQL(db)
-        # ⬇️ Instanciar y pasar las dependencias para el nuevo flujo
         servicio_correo = ServicioCorreo() 
         hasher = PasswordHasher()
         
@@ -104,7 +103,8 @@ def aprobar_usuario(
             hasher=hasher
         )
         
-        usuario_aprobado = caso_uso.ejecutar(user_id)
+        # ⬅️ CAMBIO CLAVE: Se usa await para ejecutar el Caso de Uso (que ahora llama a la función de correo asíncrona)
+        usuario_aprobado = await caso_uso.ejecutar(user_id) 
         
         return usuario_aprobado
     except ValueError as e:
