@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Column, String, DateTime, Enum as SQLAlchemyEnum
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from typing import Optional
+from typing import Optional, List # <-- AGREGAR List
 
 from .configuracion import Base
 from dominio.entidades.Usuario import Usuario
@@ -45,8 +45,6 @@ class RepositorioUsuarioSQL(IRepoUsuario):
         self.db.commit()
         
         # Devolver la entidad de dominio validada desde el objeto de DB
-        # Es importante recargar el objeto para obtener valores por defecto de la DB (como IDs)
-        # Pero para 'merge', el objeto ya está en la sesión. Validamos su __dict__.
         return Usuario.model_validate(usuario_db)
 
     def obtener_por_email(self, email: str) -> Optional[Usuario]:
@@ -57,3 +55,18 @@ class RepositorioUsuarioSQL(IRepoUsuario):
 
     def existe_email(self, email: str) -> bool:
         return self.db.query(UsuarioDB).filter(UsuarioDB.email == email).count() > 0
+
+    # --- MÉTODOS REQUERIDOS PARA LA GESTIÓN DE USUARIOS (NUEVOS) ---
+    
+    def obtener_todos(self) -> List[Usuario]:
+        """Devuelve todos los usuarios para la vista de administrador."""
+        usuarios_db = self.db.query(UsuarioDB).all()
+        # Mapea cada objeto de DB a la Entidad de Dominio Usuario
+        return [Usuario.model_validate(usuario) for usuario in usuarios_db]
+
+    def obtener_por_id(self, id: uuid.UUID) -> Optional[Usuario]:
+        """Devuelve un usuario por su ID (necesario para el PATCH /approve)."""
+        usuario_db = self.db.query(UsuarioDB).filter(UsuarioDB.id == id).first()
+        if usuario_db:
+            return Usuario.model_validate(usuario_db)
+        return None
