@@ -38,7 +38,7 @@ class TokenDTO(BaseModel):
 class UsuarioDetalleDTO(BaseModel):
     id: uuid.UUID
     nombres: str
-    apellidos: str 
+    apellidos: Optional[str] = None # <-- ¡CORRECCIÓN CLAVE AQUÍ!
     email: EmailStr
     rol: RolUsuario
     estado: EstadoUsuario # Importante para saber si está ACTIVO/PENDIENTE

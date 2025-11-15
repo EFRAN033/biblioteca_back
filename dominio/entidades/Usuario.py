@@ -8,7 +8,7 @@ from ..value_objects.EstadoUsuario import EstadoUsuario
 class Usuario(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     nombres: str
-    apellidos: str 
+    apellidos: Optional[str] = None # <-- CAMBIO CLAVE: Ahora acepta None/NULL
     email: EmailStr
     hash_contrasena: Optional[str] = None 
     rol: RolUsuario
