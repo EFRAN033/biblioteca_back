@@ -14,14 +14,16 @@ from aplicacion.dto.UsuarioDTO import UsuarioRegistroDTO, UsuarioLoginDTO, Token
 from aplicacion.casos_uso.CU_RegistrarUsuario import RegistrarUsuario
 from aplicacion.casos_uso.CU_AutenticarUsuario import AutenticarUsuario
 from aplicacion.casos_uso.CU_AprobarUsuario import AprobarUsuario 
-from aplicacion.casos_uso.CU_GestionarUsuarios import GestionarUsuarios # <-- IMPORTACIÓN NUEVA
+from aplicacion.casos_uso.CU_GestionarUsuarios import GestionarUsuarios 
 # ----------------------------------------------------
 
-# --- Importaciones de Capa de Infraestructura ---
+# --- Importaciones de Capa de Infraestructura (CORREGIDO) ---
 from infraestructura.persistencia.configuracion import get_db
 from infraestructura.persistencia.RepositorioUsuarioSQL import RepositorioUsuarioSQL
 from infraestructura.seguridad.password_hasher import PasswordHasher
 from infraestructura.seguridad.ServicioAutenticacionJWT import ServicioAutenticacionJWT
+# ⬇️ NUEVA IMPORTACIÓN: Debes asegurar que la ruta a tu ServicioCorreo sea correcta
+from infraestructura.servicios.ServicioCorreo import ServicioCorreo 
 # ----------------------------------------------------
 
 
@@ -79,7 +81,7 @@ def login_para_access_token(usuario_data: UsuarioLoginDTO, db: Session = Depends
         )
 
 
-# --- ENDPOINT PARA APROBACIÓN DE USUARIOS ---
+# --- ENDPOINT PARA APROBACIÓN DE USUARIOS (CORREGIDO) ---
 @router.patch("/users/{user_id}/approve", response_model=UsuarioDetalleDTO)
 def aprobar_usuario(
     user_id: uuid.UUID,
@@ -88,10 +90,19 @@ def aprobar_usuario(
 ):
     """
     Permite al Administrador cambiar el estado de un usuario de PENDIENTE a ACTIVO.
+    Inicia la generación de credenciales y el envío de correo.
     """
     try:
         repo = RepositorioUsuarioSQL(db)
-        caso_uso = AprobarUsuario(repositorio_usuario=repo)
+        # ⬇️ Instanciar y pasar las dependencias para el nuevo flujo
+        servicio_correo = ServicioCorreo() 
+        hasher = PasswordHasher()
+        
+        caso_uso = AprobarUsuario(
+            repositorio_usuario=repo,
+            servicio_correo=servicio_correo,
+            hasher=hasher
+        )
         
         usuario_aprobado = caso_uso.ejecutar(user_id)
         
@@ -101,7 +112,7 @@ def aprobar_usuario(
 
 
 # --- ENDPOINT PARA OBTENER TODOS LOS USUARIOS ---
-@router.get("/users", response_model=List[UsuarioDetalleDTO]) # <-- NUEVO ENDPOINT PARA EL FRONTEND
+@router.get("/users", response_model=List[UsuarioDetalleDTO]) 
 def listar_usuarios(
     db: Session = Depends(get_db),
     admin_actual: Usuario = Depends(solo_admins) # Protegido: Solo ADMIN puede listar
