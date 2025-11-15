@@ -1,4 +1,4 @@
-# infraestructura/servicios/ServicioCorreo.py (Implementación Real)
+# infraestructura/servicios/ServicioCorreo.py (Implementación Real - CORREGIDO)
 
 import os
 from dotenv import load_dotenv
@@ -15,10 +15,16 @@ load_dotenv()
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("EMAIL_USER"),
     MAIL_PASSWORD=os.getenv("EMAIL_PASS"),
-    MAIL_FROM=os.getenv("EMAIL_SENDER"),
+    
+    # 🚨 CORRECCIÓN 1: MAIL_FROM debe ser la dirección de correo
+    MAIL_FROM=os.getenv("EMAIL_USER"),
+    
     MAIL_PORT=int(os.getenv("EMAIL_PORT")),
     MAIL_SERVER=os.getenv("EMAIL_HOST"),
+    
+    # 🚨 CORRECCIÓN 2: MAIL_FROM_NAME es el nombre visible
     MAIL_FROM_NAME=os.getenv("EMAIL_SENDER"),
+    
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
@@ -63,13 +69,11 @@ class ServicioCorreo(IServicioCorreo):
         # 3. Enviar el correo usando FastAPI-Mail
         fm = FastMail(conf)
         try:
-            # 💡 IMPORTANTE: Debes usar await, lo que significa que el endpoint debe ser 'async'
+            # 💡 El endpoint aprobar_usuario en auth_router.py es ahora 'async'
             await fm.send_message(message) 
             print(f"INFO: Correo de aprobación enviado realmente a {usuario.email}")
             return True
         except Exception as e:
+            # Revisa los detalles aquí si el envío falla (e.g., credenciales incorrectas o puerto bloqueado)
             print(f"ERROR: No se pudo enviar el correo a {usuario.email}. Detalles: {e}")
             return False
-
-# Nota: FastMail requiere funciones asíncronas para enviar.
-# Debemos ajustar el router.

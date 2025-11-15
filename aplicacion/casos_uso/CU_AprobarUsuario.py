@@ -2,10 +2,9 @@ from dominio.puertos.IRepoUsuario import IRepoUsuario
 from dominio.entidades.Usuario import Usuario
 from dominio.value_objects.EstadoUsuario import EstadoUsuario
 import uuid
+from typing import Optional # <--- AÑADIDO: Necesario para el tipado de contrasena_plana
 # --- NUEVAS IMPORTACIONES PARA CORREO Y HASH ---
-# NOTA: Debes crear dominio/puertos/IServicioCorreo.py
 from dominio.puertos.IServicioCorreo import IServicioCorreo 
-# NOTA: Debes asegurar que esta importación sea correcta
 from infraestructura.seguridad.password_hasher import PasswordHasher 
 import secrets 
 import string 
@@ -18,7 +17,8 @@ class AprobarUsuario:
         self.servicio_correo = servicio_correo 
         self.hasher = hasher
 
-    def ejecutar(self, usuario_id: uuid.UUID) -> Usuario:
+    # 🚨 CORRECCIÓN CLAVE 1: La función debe ser asíncrona
+    async def ejecutar(self, usuario_id: uuid.UUID) -> Usuario:
         usuario = self.repositorio_usuario.obtener_por_id(usuario_id) 
 
         if not usuario:
@@ -28,7 +28,7 @@ class AprobarUsuario:
             raise ValueError(f"El usuario ya se encuentra en estado {usuario.estado.value}.")
 
         # --- LÓGICA DE GENERACIÓN Y HASH DE CONTRASEÑA ---
-        contrasena_plana = None
+        contrasena_plana: Optional[str] = None # Tipado correcto
         
         # Si no tiene hash (es bibliotecario o revisor pendiente), se genera una contraseña temporal
         if usuario.hash_contrasena is None:
@@ -48,6 +48,7 @@ class AprobarUsuario:
         usuario_aprobado = self.repositorio_usuario.guardar(usuario)
 
         # 4. Enviar notificación por correo (se pasa la contraseña plana si se generó)
-        self.servicio_correo.enviar_aprobacion(usuario_aprobado, contrasena_plana) 
+        # 🚨 CORRECCIÓN CLAVE 2: Se usa await para la llamada asíncrona
+        await self.servicio_correo.enviar_aprobacion(usuario_aprobado, contrasena_plana) 
         
         return usuario_aprobado
