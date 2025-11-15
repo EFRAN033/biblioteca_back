@@ -1,23 +1,29 @@
-import uuid # Necesario para el user_id en la nueva ruta
+import uuid 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List # <-- Necesario para el tipo de retorno List[UsuarioDetalleDTO]
 
-# --- Importaciones Agregadas para Aprobación de Usuario y Seguridad ---
+# --- Importaciones de Capa de Dominio y Seguridad ---
 from dominio.entidades.Usuario import Usuario
 from dominio.value_objects.RolUsuario import RolUsuario 
-from aplicacion.casos_uso.CU_AprobarUsuario import AprobarUsuario # Caso de Uso nuevo
-# Asume que 'get_usuario_actual' y 'UsuarioDetalleDTO' están disponibles:
-from infraestructura.api.market_router import get_usuario_actual 
-from aplicacion.dto.UsuarioDTO import UsuarioDetalleDTO 
-# ---------------------------------------------------------------------
+from infraestructura.api.market_router import get_usuario_actual # Dependencia de seguridad
+# ----------------------------------------------------
 
-from aplicacion.dto.UsuarioDTO import UsuarioRegistroDTO, UsuarioLoginDTO, TokenDTO
+# --- Importaciones de Capa de Aplicación ---
+from aplicacion.dto.UsuarioDTO import UsuarioRegistroDTO, UsuarioLoginDTO, TokenDTO, UsuarioDetalleDTO
 from aplicacion.casos_uso.CU_RegistrarUsuario import RegistrarUsuario
 from aplicacion.casos_uso.CU_AutenticarUsuario import AutenticarUsuario
+from aplicacion.casos_uso.CU_AprobarUsuario import AprobarUsuario 
+from aplicacion.casos_uso.CU_GestionarUsuarios import GestionarUsuarios # <-- IMPORTACIÓN NUEVA
+# ----------------------------------------------------
+
+# --- Importaciones de Capa de Infraestructura ---
 from infraestructura.persistencia.configuracion import get_db
 from infraestructura.persistencia.RepositorioUsuarioSQL import RepositorioUsuarioSQL
 from infraestructura.seguridad.password_hasher import PasswordHasher
 from infraestructura.seguridad.ServicioAutenticacionJWT import ServicioAutenticacionJWT
+# ----------------------------------------------------
+
 
 router = APIRouter(
     prefix="/auth",
@@ -45,8 +51,7 @@ def registrar_usuario(usuario_data: UsuarioRegistroDTO, db: Session = Depends(ge
         
         caso_uso.ejecutar(usuario_data) 
         
-        # Mensaje de éxito genérico
-        if usuario_data.rol == RolUsuario.ESTUDIANTE: # RolUsuario debe estar importado
+        if usuario_data.rol == RolUsuario.ESTUDIANTE:
              return {"mensaje": "Usuario creado exitosamente."}
         else:
              return {"mensaje": "Solicitud de registro enviada para revisión."}
@@ -54,7 +59,6 @@ def registrar_usuario(usuario_data: UsuarioRegistroDTO, db: Session = Depends(ge
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        # Captura de errores inesperados
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ocurrió un error inesperado.")
 
 
@@ -75,12 +79,11 @@ def login_para_access_token(usuario_data: UsuarioLoginDTO, db: Session = Depends
         )
 
 
-# --- NUEVO ENDPOINT PARA APROBACIÓN DE USUARIOS ---
+# --- ENDPOINT PARA APROBACIÓN DE USUARIOS ---
 @router.patch("/users/{user_id}/approve", response_model=UsuarioDetalleDTO)
 def aprobar_usuario(
     user_id: uuid.UUID,
     db: Session = Depends(get_db),
-    # Aplica la dependencia para que solo los ADMIN puedan usar esta ruta
     admin_actual: Usuario = Depends(solo_admins) 
 ):
     """
@@ -94,6 +97,22 @@ def aprobar_usuario(
         
         return usuario_aprobado
     except ValueError as e:
-        # Errores esperados del caso de uso (ej. usuario no encontrado, ya activo)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-# ----------------------------------------------------
+
+
+# --- ENDPOINT PARA OBTENER TODOS LOS USUARIOS ---
+@router.get("/users", response_model=List[UsuarioDetalleDTO]) # <-- NUEVO ENDPOINT PARA EL FRONTEND
+def listar_usuarios(
+    db: Session = Depends(get_db),
+    admin_actual: Usuario = Depends(solo_admins) # Protegido: Solo ADMIN puede listar
+):
+    """
+    Obtiene la lista de todos los usuarios registrados. Requiere rol de administrador.
+    """
+    try:
+        repo = RepositorioUsuarioSQL(db)
+        caso_uso = GestionarUsuarios(repositorio_usuario=repo)
+        return caso_uso.obtener_todos_los_usuarios()
+    except Exception as e:
+        # Esto atraparía errores internos, como si la DB no estuviera accesible.
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
